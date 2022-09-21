@@ -1,0 +1,19 @@
+.btn-create-post {
+    margin-block: 35px;
+}
+
+.likes-icon {
+    color: red;
+    padding-right: 10px;
+}
+
+.profile-post-header {
+    margin-top: 50px;
+}
+
+/* Add space between cards */
+.card {
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-bottom: 30px;
+}

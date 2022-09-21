@@ -1,0 +1,60 @@
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelector('#save-post').addEventListener('click', submit_post); 
+    });
+
+    function submit_post() {
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        // get post text
+        const postContent =  document.querySelector('#post-content').value;             
+        
+        // make API POST request
+        const request = new Request(
+            '/posts',
+            {headers: {'X-CSRFToken': csrftoken}}
+        );
+        fetch(request, {
+            method: 'POST',
+            mode: 'same-origin',
+            body: JSON.stringify({
+                post_content: postContent
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            // reload page
+            location.reload(); 
+        })
+        // Catch any errors and log them to the console
+        .catch(error => {
+            console.log('Error:', error);
+        });             
+    }
+
+    function update_post(post_id) {
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        // get post text
+        const postContent =  document.querySelector('#post-content').value;
+        
+        // make API PUT request
+        fetch(`/posts/${post_id}`, {
+            method: 'PUT',
+            headers: { "X-CSRFToken": csrftoken },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                post_content: postContent
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                // pass
+            } else {
+                throw response;
+            }
+        })
+        // Catch any errors and log them to the console
+        .catch(error => {
+            console.log('Error:', error);
+        });
+    }
+</script>

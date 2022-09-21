@@ -1,0 +1,20 @@
+textarea {
+    min-height: 400px;
+}
+
+#single-email-view p {
+    margin: 0;
+}
+
+#single-email-view textarea {
+    background-color: white;
+}
+
+#btn-reply {
+    margin-top: 10px;
+}
+
+#btn-archive {
+    margin-top: 10px;
+    margin-left: 20px;
+}

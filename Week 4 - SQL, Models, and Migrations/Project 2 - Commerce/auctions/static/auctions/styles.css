@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Changa&display=swap');
+
+@font-face {
+    font-family: "Aurebesh";
+    src: url("fonts/Aurebesh.otf");
+}
+@font-face {
+    font-family: "Aurebesh";
+    src: url("fonts/Aurebesh Bold.otf");
+    font-weight: bold;
+}
+
+.credit-sign {
+    font-family: "Aurebesh" !important;
+}
+
+.main-logo {
+    font-family:  "Aurebesh" !important;
+    font-weight: bold;
+}
+
+body {
+    padding: 10px;
+    font-family: 'Changa', sans-serif !important;
+}
+
+/* ------------------------- */
+/* show listing page styling */
+/* ------------------------- */
+.showlisting-image {
+    max-height: 150px;
+    width: auto;
+}
+
+.showlisting-header {
+    margin-top: 50px;
+}
+
+.comment-form {
+    margin-top: 50px;
+}
+
+.comment-form-textarea {
+    width: 100%;
+    margin-bottom: 20px;
+    border: 1px solid #3d397c;
+    float: right;
+    border-radius: 5px;
+    padding-left: 40px;
+    padding-right: 30px;
+    padding-top: 10px
+}
+
+/* ---------------------- */
+/* formatting of comments */
+/* ---------------------- */
+.darker {
+    border: 1px solid #3d397c;
+    background-color: rgb(153, 147, 245);
+    float: right;
+    border-radius: 5px;
+    padding-left: 40px;
+    padding-right: 30px;
+    padding-top: 10px
+}
+
+.comment {
+    border: 1px solid rgb(91, 92, 163);
+    background-color: rgba(238, 238, 255, 0.973);
+    float: left;
+    border-radius: 5px;
+    padding-left: 40px;
+    padding-right: 30px;
+    padding-top: 10px
+}
+
+.comment h4,
+.comment span,
+.darker h4,
+.darker span {
+    display: inline
+}
+
+.comment p,
+.comment span,
+.darker p,
+.darker span {
+    color: rgb(8, 6, 12)
+}
+
+h4 {
+    color: black;
+    font-weight: bold
+}

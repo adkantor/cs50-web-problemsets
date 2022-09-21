@@ -1,0 +1,35 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Active Listings</h2>
+
+    {% for listing in listings %}
+        <!-- listing items as bootstrap card -->
+        <div class="card mb-3" style="max-width: 100%;">
+            <div class="row g-0">
+                <div class="col-md-4 align-self-center">
+                    {% if listing.image_url %}
+                        <!-- if an image url is available -->
+                        <img class="showlisting-image" src="{{ listing.image_url }}" alt="{{ listing.title }}">
+                    {% else %}                    
+                        <p class="text-center">No image</p>                    
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ listing.title }}</h5>
+                        <p class="card-text"><b>Price:</b> <span class="credit-sign">$</span>{{ listing.current_bid.price|default:listing.starting_bid }}</p>
+                        <p class="card-text">{{ listing.description|truncatewords:30 }}</p>
+                        <p class="card-text"><small class="text-muted">Created {{ listing.created_time }}</small></p>
+                    </div>
+                </div>
+                <a href="{% url 'show_listing' listing.id %}" class="stretched-link"></a>
+            </div>
+        </div>
+
+    {% empty %}
+
+        <div>No listings yet.</div>
+
+    {% endfor %}
+{% endblock %}

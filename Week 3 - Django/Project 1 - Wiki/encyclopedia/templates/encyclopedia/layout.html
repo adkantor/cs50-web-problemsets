@@ -1,0 +1,64 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title>{% block title %}{% endblock %}</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link href="{% static 'encyclopedia/styles.css' %}" rel="stylesheet">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <div class="row">
+            <div class="sidebar col-lg-2 col-md-3">
+                <h2>Wiki</h2>
+                <form action="{% url 'search' %}" method="get">
+                    <input class="search" type="text" name="q" placeholder="Search Encyclopedia">
+                    <input type="submit" style="display: none" />
+                </form>
+                <div>
+                    <a href="{% url 'index' %}">Home</a>
+                </div>
+                <div>
+                    <a href="{% url 'create_new_page' %}">Create New Page</a>
+                </div>
+                <div>
+                    <a href="{% url 'random_page' %}">Random Page</a>
+                </div>
+                {% block nav %}
+                {% endblock %}
+            </div>
+            <div class="main col-lg-10 col-md-9">
+                <!-- flash messages -->
+                <header>
+                    {% if messages %}    
+                        {% for msg in messages %}
+                            <div class="alert {{msg.tags}}" role="alert">
+                                {{msg | safe}}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </header>
+                
+                {% block body %}
+                {% endblock %}
+
+                <!-- script to auto-hide flash messages -->
+                <script>
+                    $(document).ready(function(){
+                        window.setTimeout(function() {
+                            $(".alert").fadeTo(500, 0).slideUp(500, function(){
+                                $(this).remove();
+                            });
+                        }, 5000);
+                    });
+                </script>
+
+            </div>
+        </div>
+
+    </body>
+    {% block script %}
+    {% endblock %}
+</html>

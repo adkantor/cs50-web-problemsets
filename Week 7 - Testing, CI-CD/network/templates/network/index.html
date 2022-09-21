@@ -1,0 +1,23 @@
+{% extends "network/layout.html" %}
+
+{% block scripts %}
+    {% csrf_token %}
+    {% include "network/submit_post_script.html" %}
+{% endblock scripts %}
+
+{% block body %}
+
+    {% include "network/new_post_modal.html" %}
+    
+    <div class="posts">
+
+        {# Pagination #}
+        {% include "network/pagination.html" %}
+
+
+        {# Posts #}
+        {% include "network/posts.html" %}
+
+    </div>
+
+{% endblock %}

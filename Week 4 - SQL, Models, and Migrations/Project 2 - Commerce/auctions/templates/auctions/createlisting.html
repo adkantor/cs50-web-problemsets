@@ -1,0 +1,18 @@
+{% extends "auctions/layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block body %}
+
+    <h2>Create Listing</h2>
+
+    <form class="create-listing-form" action="{% url 'create_listing' %}" method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <div>
+            <button class="btn btn-secondary" type=submit>Save</button>
+            <button class="btn btn-secondary" onclick="javascript:history.go(-1); return false;">Go Back</button>
+        </div>
+    </form> 
+
+
+{% endblock %}

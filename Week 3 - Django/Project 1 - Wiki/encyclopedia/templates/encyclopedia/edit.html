@@ -1,0 +1,21 @@
+{% extends "encyclopedia/layout.html" %}
+
+{% block title %}
+    Encyclopedia
+{% endblock %}
+
+{% block body %}
+
+    <h1>Edit article</h1>
+    <hr>
+
+    <form class="entry-form" action="{% url 'edit_page' %}" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <div>
+            <button class="btn btn-secondary" type=submit>Save</button>
+            <button class="btn btn-secondary" onclick="javascript:history.go(-1); return false;">Go Back</button>
+        </div>
+    </form> 
+
+{% endblock %}

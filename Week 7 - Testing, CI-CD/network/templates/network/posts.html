@@ -1,0 +1,135 @@
+{% for post in page_obj %}
+    <div class="card bg-light border-secondary">
+        <div class="card-body">
+            <a href={% url 'profiles' post.created_by.id %} class="link-dark text-decoration-none">
+                <h5 class="card-title">{{ post.created_by }}</h5>
+            </a>
+            {% if user.is_authenticated and user.id == post.created_by.id %}
+                <button type="button" id="btn-create-post" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#new-post-modal" data-id="{{post.id}}">Edit post</button>
+            {% endif %}
+            <p class="card-text" id="post-content-{{ post.id }}">{{ post.content }}</p>
+            <p class="card-text"><small class="text-muted">{{ post.created_time }}</small></p>
+            <p class="card-text"><i class="fas fa-heart fa-sm likes-icon"></i><span id="post-likes-{{ post.id }}">{{ post.liked_by.all.count }}</span></p>
+        </div>
+        {% if user.is_authenticated %}
+            <div class="card-footer">
+                <button type="button" id="btn-like" class="btn btn-secondary" data-id="{{post.id}}" data-isliking="{% if user in post.liked_by.all %}1{% else %}0{% endif %}">
+                    {% if user in post.liked_by.all %}
+                        <i class="fas fa-heart likes-icon"></i>Unlike
+                    {% else %}
+                        <i class="far fa-heart likes-icon"></i>Like
+                    {% endif %}
+                </button>
+            </div>
+        {% endif %}
+    </div>
+{% endfor %}
+
+<script>
+    $('.card ').on('click', ".card-footer button", function(event) {
+        const post_id = $(this).data('id');
+        const isliking = ($(this).data('isliking') == 1 ? true : false);
+
+        // Update  liked_by on server
+        const csrftoken = getCookie('csrftoken');
+        fetch(`/posts/${post_id}`, {
+            method: 'PUT',
+            headers: { "X-CSRFToken": csrftoken },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                liking: !isliking
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                // update button and likes counter
+                const likesCounter = $(`#post-likes-${post_id}`)
+                const likesCount = parseInt(likesCounter.text());
+                if (isliking) {
+                    $(this).data('isliking', "0")
+                    $(this).html('<i class="far fa-heart likes-icon"></i>Like');
+                    likesCounter.text(`${likesCount-1}`);
+                    
+                } else {
+                    $(this).data('isliking', "1")
+                    $(this).html('<i class="fas fa-heart likes-icon"></i>Unlike');
+                    likesCounter.text(`${likesCount+1}`);
+                }
+                
+            } else {
+                throw response;
+            }
+        })
+        // Catch any errors and log them to the console
+        .catch(error => {
+            console.log('Error:', error);
+        });
+        
+    });
+    
+    $('#new-post-modal').on('show.bs.modal', function (event) {
+        const button = $(event.relatedTarget); // Button that triggered the modal           
+
+        const id = button.data('id');
+        if(id === undefined) {
+            return;
+        }
+
+        // get post content from server
+        fetch(`/posts/${id}`)
+        .then(response => response.json())
+        .then(post => {              
+            // update modal fields
+            const modal = $(this);
+            modal.find('.modal-title').text('Update Post');
+            modal.find('.modal-body textarea').text(post.content);
+
+            document.querySelector('#save-post').removeEventListener('click', submit_post);
+            document.querySelector('#save-post').addEventListener('click', () => {
+                // update post in database
+                update_post(post.id);
+                // update post un page (without reloading page)
+                update_page(id);
+            });
+        })
+        // Catch any errors and log them to the console
+        .catch(error => {
+            console.log('Error:', error);
+        });
+    });
+
+    function update_page(id) {            
+        // get post content from server
+        fetch(`/posts/${id}`)
+        .then(response => response.json())
+        .then(post => {
+            // update relevant paragraph
+            const postContent = document.querySelector(`#post-content-${id}`);
+            postContent.innerHTML = post.content;
+        })
+        // Catch any errors and log them to the console
+        .catch(error => {
+            console.log('Error:', error);
+        });        
+    }
+
+
+    // The following function are copying from 
+        // https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+</script>

@@ -1,0 +1,393 @@
+{% extends "mail/layout.html" %}
+{% load static %}
+
+{% block head %}
+    <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+{% endblock %}
+
+{% block body %}
+    
+    {{ request.user.email|json_script:"userEmail" }}
+
+    <div id="app"></div>     
+    <script type="text/babel">
+    
+        class App extends React.Component {
+
+            constructor(props) {
+                super(props);
+                this.state = {
+                    userEmail: JSON.parse(document.getElementById('userEmail').textContent),
+                    mailbox: 'inbox',
+                    viewType: 'mailbox',
+                    emailId: 0
+                };
+            }
+
+            render() { 
+                if (this.state.viewType === 'compose') {
+                    return (
+                        <div>
+                            <NavBar 
+                                userEmail={this.state.userEmail}
+                                switchMailbox = {this.switchMailbox}
+                                compose = {this.compose}
+                            />
+                            <ComposeForm 
+                                userEmail={this.state.userEmail}
+                                switchMailbox = {this.switchMailbox}
+                                emailId = {this.state.emailId}
+                            />
+                        </div>
+                    );
+                } else if (this.state.viewType === 'mailbox') {
+                    return (
+                        <div>
+                            <NavBar 
+                                userEmail={this.state.userEmail}
+                                switchMailbox = {this.switchMailbox}
+                                compose = {this.compose}
+                            />
+                            <Mailbox 
+                                mailbox={this.state.mailbox} 
+                                compose = {this.compose}
+                                displaySingleEmail = {this.displaySingleEmail}
+                            />
+                        </div>
+                    );
+                        
+                } else if (this.state.viewType === 'single') {
+                    return (
+                        <div>
+                            <NavBar 
+                                userEmail={this.state.userEmail}
+                                switchMailbox = {this.switchMailbox}
+                                compose = {this.compose}
+                            />
+                            <SingleEmail 
+                                emailId = {this.state.emailId}
+                                userEmail={this.state.userEmail}
+                                switchMailbox = {this.switchMailbox}
+                                compose = {this.compose}
+                            />
+                        </div>
+                    );
+                }
+            }
+
+            switchMailbox = (mailbox) => {
+                this.setState({
+                    mailbox: mailbox,
+                    viewType: 'mailbox',
+                    emailId: 0
+                });
+            }
+
+            compose = () => {
+                this.setState({
+                    viewType: 'compose',
+                });
+            }
+
+            displaySingleEmail = (emailId) => {
+                this.setState ({
+                    viewType: 'single',
+                    emailId: emailId
+                });
+            }
+
+        }
+
+        
+        class NavBar extends React.Component {
+
+            constructor(props) {
+                super(props);
+                this.state = {};
+            }
+            
+            render() {
+                return (
+                    <div>
+                        <h2>{this.props.userEmail}</h2>
+                        <button className="btn btn-sm btn-outline-primary" onClick={this.switchMailbox} id="inbox">Inbox</button>
+                        <button className="btn btn-sm btn-outline-primary" onClick={this.compose} id="compose">Compose</button>
+                        <button className="btn btn-sm btn-outline-primary" onClick={this.switchMailbox} id="sent">Sent</button>
+                        <button className="btn btn-sm btn-outline-primary" onClick={this.switchMailbox} id="archive">Archived</button>
+                        <a className="btn btn-sm btn-outline-primary" href="{% url 'logout' %}">Log Out</a>
+                        <hr/>
+                    </div>
+                );
+            }
+
+            switchMailbox = (event) => {
+                const mailbox = event.target.id;
+                this.props.switchMailbox(mailbox);
+            }
+
+            compose = () => {
+                this.props.compose();
+            }
+
+        }
+
+
+        class Mailbox extends React.Component {
+
+            constructor(props) {
+                super(props);
+                this.state = {
+                    emails: []
+                };
+            }
+            
+            componentDidMount() {    
+                this.fetchEmails(this.props.mailbox)
+            }
+
+            componentDidUpdate(prevProps) {    
+                if (this.props.mailbox !== prevProps.mailbox) {
+                    this.fetchEmails(this.props.mailbox)
+                }
+            }
+
+            render() {
+                
+                const rows = this.state.emails.map((email, i) => {
+                    return (
+                        <div key={i} className={`list-group-item list-group-item-action ${email.read ? "bg-light" : ""}`} data-id={email.id} onClick={this.loadEmail}>
+                            <div className="d-flex w-100 justify-content-between">
+                                <h5 className="mb-1">From: {email.sender}</h5>
+                                <h5 className="mb-1">To: {email.recipients.join(', ')}</h5>
+                                <small className="text-muted">{email.timestamp}</small>
+                            </div>
+                            <p className="mb-1">{email.subject}</p>
+                        </div>
+                    );
+                })
+                
+                return (
+                    <div>
+                        <h3>{this.props.mailbox.charAt(0).toUpperCase() + this.props.mailbox.slice(1)}</h3>
+                        <div className="list-group">
+                            {rows}
+                        </div>
+                    </div>
+                );
+            }
+
+
+            fetchEmails = (mailbox) => {
+                fetch(`/emails/${mailbox}`)
+                .then(response => response.json())
+                .then(emails => {
+                    // Print emails
+                    console.log(emails);
+
+                    // update state
+                    this.setState({
+                        emails: emails
+                    });
+
+                });
+            }
+
+
+            loadEmail = (event) => {
+                const id = event.currentTarget.dataset.id;
+
+                // Mark email as read
+                fetch(`/emails/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        read: true
+                    })
+                })
+
+                this.props.displaySingleEmail(id);
+            }
+
+        }
+
+
+        class ComposeForm extends React.Component {
+
+            constructor(props) {
+                super(props);
+                this.state = {
+                    sender: this.props.userEmail,
+                    recipients:'',
+                    subject: '',
+                    body: ''
+                };
+            }
+
+            componentDidMount() {    
+                if (this.props.emailId !== 0) {
+                    this.fetchEmail(this.props.emailId)
+                }
+            }
+
+            render() {
+                return (
+                    <div id="compose-view">
+                        <h3>New Email</h3>
+                        <form id="compose-form">
+                            <div className="form-group">
+                                From: <input disabled className="form-control" id="sender" onChange={this.updateField} value={this.state.sender}></input>
+                            </div>
+                            <div className="form-group">
+                                To: <input className="form-control" id="recipients" onChange={this.updateField}  value={this.state.recipients}></input>
+                            </div>
+                            <div className="form-group">
+                                <input className="form-control" id="subject" onChange={this.updateField}  value={this.state.subject} placeholder="Subject"></input>
+                            </div>
+                            <textarea className="form-control" id="body" onChange={this.updateField}  value={this.state.body} placeholder="Body"></textarea>
+                            <button className="btn btn-primary" onClick={this.submitEmail} id="compose-submit">Submit</button>
+                        </form>
+                    </div>
+                );
+            }
+
+
+            fetchEmail = (emailId) => {
+                fetch(`/emails/${emailId}`)
+                .then(response => response.json())
+                .then(email => {
+                    // Print email
+                    console.log(email);
+
+                    // update state
+                    const s = email.subject;
+                    this.setState({
+                        recipients: email.sender,
+                        subject: (s.substring(0, 3) === 'Re:' ? s : `Re: ${s}`),
+                        body: `\n\nOn ${email.timestamp} ${email.sender} wrote:\n${email.body}`,
+                    });
+                });
+            }
+
+
+            updateField = (event) => {
+                this.setState({
+                    [event.target.id]: event.target.value
+                });
+            }
+
+
+            submitEmail = (event) => {
+                
+                // make API POST request
+                fetch('/emails', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        recipients: this.state.recipients,
+                        subject: this.state.subject,
+                        body: this.state.body
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    // Print result
+                    console.log(result); 
+                    // display sent mailbox
+                    this.props.switchMailbox('sent'); 
+                })
+                // Catch any errors and log them to the console
+                .catch(error => {
+                    console.log('Error:', error);
+                });
+
+                event.preventDefault();
+            }
+
+        }
+
+
+        class SingleEmail extends React.Component {
+
+            constructor(props) {
+                super(props);
+                this.state = {
+                    sender: '',
+                    recipients: '',
+                    subject: '',
+                    timestamp: '',
+                    body: '',
+                    archived: false,
+                    amIRecipient: false
+                };
+            }
+            
+            componentDidMount() {    
+                this.fetchEmail(this.props.emailId)
+            }
+
+            render() {
+                console.log(`archived: ${this.state.archived}`);
+                return (
+                    <div id="single-email-view">
+                        <p><strong>From: </strong>{this.state.sender}</p>
+                        <p><strong>To: </strong>{this.state.recipients}</p>
+                        <p><strong>Subject: </strong>{this.state.subject}</p>
+                        <p><strong>Timestamp: </strong>{this.state.timestamp}</p>
+                        <button className = "btn btn-sm btn-outline-primary" id="btn-reply" onClick={this.displayReply}>Reply</button>
+                        {this.state.amIRecipient ? <button className = 'btn btn-sm btn-outline-secondary' id="btn-archive" onClick={this.toggleArchive}>{(this.state.archived ? 'UnArchive' : 'Archive')}</button> : ''}
+                        <hr/>
+                        <div className="mb-3">
+                            <textarea readOnly rows="3" className="form-control" value={this.state.body}></textarea>
+                        </div>
+                    </div>
+                );
+            }
+        
+
+            fetchEmail = (emailId) => {
+                fetch(`/emails/${emailId}`)
+                .then(response => response.json())
+                .then(email => {
+                    // Print email
+                    console.log(email);
+
+                    // update state
+                    this.setState({
+                        sender: email.sender,
+                        recipients: email.recipients.join(', '),
+                        subject: email.subject,
+                        timestamp: email.timestamp,
+                        body: email.body,
+                        archived: email.archived,
+                        amIRecipient: email.recipients.includes(this.props.userEmail)
+                    });
+                });
+            }
+
+
+            displayReply = () => {
+                this.props.compose();
+            }
+
+
+            toggleArchive = () => {
+                const newArchivedStatus = !this.state.archived;
+                console.log(`old status: ${this.state.archived}, new status: ${newArchivedStatus}`);
+                // change status
+                fetch(`/emails/${this.props.emailId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        archived: newArchivedStatus
+                    })
+                })
+                // switch to inbox
+                this.props.switchMailbox('inbox');
+            }
+        
+        }
+
+
+        ReactDOM.render(<App />, document.querySelector("#app"));
+    
+    </script>
+{% endblock %}

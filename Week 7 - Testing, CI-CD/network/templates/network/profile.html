@@ -1,0 +1,169 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+
+    {% csrf_token %}
+    
+    {{ p_user.id|json_script:"displayedUserId" }}
+
+    {# Profile data #}
+    <div class="card mb-3 text-center border-0" style="max-width: 100%;">
+
+        <div class="card-header bg-transparent border-0">
+            <h3>{{ p_user.username }}</h3>
+        </div>
+
+        <div class="row g-0">
+            <div class="col-md-3 align-self-center">
+                {% if p_user.image %}
+                    {# if an image url is available #}
+                    <img class="showlisting-image rounded-circle" src="{{ p_user.image.url }}">
+                {% else %}                    
+                    <p class="text-center">No image</p>                    
+                {% endif %}
+            </div>
+            <div class="col">
+                <div class="row g-0">
+                    <div class="col-md-3 text-center">
+                        <div class="card-body">                    
+                            <h5 class="card-title">{{ p_user.posts.all.count }}</h5>
+                            <p class="card-text"><small class="text-muted">Posts</small></p>                    
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="card-body">
+                            <h5 class="card-title" id="followers">{{ p_user.followed_by.all.count }}</h5>
+                            <p class="card-text"><small class="text-muted">Followers</small></p>                 
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ p_user.following.all.count }}</h5>
+                            <p class="card-text"><small class="text-muted">Following</small></p>                  
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-0">
+                    <div class="col-md-9 text-center">
+                        {% if user.is_authenticated and p_user.id != user.id %}
+                            <div class="d-grid gap-2">
+                                <button id="btn-follow"></button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>            
+        </div>
+    </div>
+    
+    <h2 class="profile-post-header">{{ p_user.username }}'s Posts</h2>
+
+    {# Pagination #}
+    {% include "network/pagination.html" %}
+
+
+    {# Posts #}
+    {% include "network/posts.html" %}
+
+    {# Script to add button to follow / unfollow #}
+    {% if user.is_authenticated and p_user.id != user.id %}
+        <script type="text/javascript">            
+            
+            var btnFollow = document.querySelector('#btn-follow');
+            var headerFollowers = document.querySelector('#followers');
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                const displayedUserId = JSON.parse(document.getElementById('displayedUserId').textContent);
+                
+                // initial setup of button
+
+                // Fetch follow status from server
+                fetch(`/follow/${displayedUserId}`)
+                .then(response => response.json())
+                .then(followResponse => {
+                    // update button formatting
+                    updateButton(followResponse.isfollowing);
+                    // add event listener
+                    btnFollow.addEventListener('click', whatever = toggleFollow.bind(btnFollow, displayedUserId, followResponse.isfollowing), {once:true});
+                })
+                // Catch any errors and log them to the console
+                .catch(error => {
+                    console.log('Error:', error);
+                });                
+
+
+            });
+
+
+            function updateButton(isFollowing) {
+                btnFollow.innerHTML = (isFollowing ? 'Unfollow' : 'Follow');
+                btnFollow.className = (isFollowing ? 'btn btn-secondary' : 'btn btn-primary btn-block');
+            }
+
+            function updateFollowers(isFollowing) {
+                const num_followers = parseInt(headerFollowers.textContent)
+                console.log(headerFollowers.textContent)
+                console.log(num_followers)
+                if (isFollowing) {
+                    headerFollowers.textContent = num_followers + 1;
+                } else {
+                    headerFollowers.textContent = num_followers - 1;
+                }
+                
+            }
+
+
+            function toggleFollow(id, currentFollowStatus) {
+                
+                const newFollowStatus = !currentFollowStatus;
+                const csrftoken = getCookie('csrftoken');
+                // Update follow status on server
+                fetch(`/follow/${id}`, {
+                    method: 'PUT',
+                    headers: { "X-CSRFToken": csrftoken },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        isfollowing: newFollowStatus
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // update followers' number
+                        updateFollowers(newFollowStatus);
+                        // update button formatting
+                        updateButton(newFollowStatus);
+                        // add event listener
+                        btnFollow.addEventListener('click', whatever = toggleFollow.bind(btnFollow, id, newFollowStatus), {once:true});
+                    } else {
+                        throw response;
+                    }
+                })
+                // Catch any errors and log them to the console
+                .catch(error => {
+                    console.log('Error:', error);
+                });
+            }
+        
+            // The following function are copying from 
+            // https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
+            function getCookie(name) {
+                var cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    var cookies = document.cookie.split(';');
+                    for (var i = 0; i < cookies.length; i++) {
+                        var cookie = cookies[i].trim();
+                        // Does this cookie string begin with the name we want?
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+        </script>
+
+    {% endif %}
+
+{% endblock %}

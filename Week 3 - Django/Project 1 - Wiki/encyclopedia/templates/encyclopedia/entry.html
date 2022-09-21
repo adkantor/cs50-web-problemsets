@@ -1,0 +1,30 @@
+{% extends "encyclopedia/layout.html" %}
+
+{% block title %}
+    Encyclopedia
+{% endblock %}
+
+{% block body %}
+
+    <div>
+        {% if entry %}
+            
+            <h1>{{ title }}</h1>
+
+            <form action="{% url 'edit_page' %}" method="get">
+                {% csrf_token %}
+                <input type="hidden" name="title", value="{{ title }}">
+                <button class="btn btn-dark btn-sm" type="submit">Edit this entry</button>
+            </form>
+            <hr>
+            <div class="entry">
+                {{ entry | safe}}
+            </div>
+        {% else %}
+            <h1>Oops!</h1>
+            <hr>
+            <p> Sorry, the entry "{{ title }}" does not exist in our database.</p>
+        {% endif %}
+    </div>
+
+{% endblock %}
